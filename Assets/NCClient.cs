@@ -27,14 +27,20 @@ using System.Xml;
 
 public class NCClient : MonoBehaviour
 {
-    private static int position = 1;
-    private TCPConnection serverConnection;
+    private static int position = 1; // for testing purpose
+
+    // information about the communication
+    private TCPConnection serverConnection; 
     private ConnectionInfo connectionInfo;
     private int port = 10000;
     private string ipAddress = "127.0.0.1";
+
+    //  all about messages
     private Communication message;
     private CommunicateUpdate messageUpdate;
     private SendReceiveOptions customSendReceiveOptions;
+
+    // some variables to make the connection work
     private bool firstConnexion = true;
     private bool lookingForServer = true;
     private int connectionTry = 0;
@@ -46,50 +52,47 @@ public class NCClient : MonoBehaviour
     private SphereCollider sc;
     private List<Length> ll=new List<Length>(); //https://forum.unity.com/threads/json-net-for-unity.200336/page-35
     
+    // a construction queue
     private List<BaseElement> constructionQueue = new List<BaseElement>();
+
+    // for deserializing 
     private JsonSerializerSettings _jsonSerializerSettings;
     private bool found = false;
     private DataContractSerializer dcs;
 
+    // ID to give at the moment if an object is to be created
     private int currentID = 0;
 
-
-
+    // to know if vr is enabled
     private bool VR_enabled = true;
 
+    // you
     private GameObject playerController;
 
-    private bool clientOff = false;
-    private string deviceName ="Oculus";
+
+    private bool clientOff = false; // on/off client
+    private string deviceName ="Oculus"; // name of the device
 
 
-    // Start is called before the first frame update
+    /// <summary>
+    /// warm things up for you <3
+    /// </summary>
     void Start()
     {
         if (XRSettings.loadedDeviceName!="")
             deviceName = XRSettings.loadedDeviceName;
         System.IO.File.WriteAllText(@"deviceName.txt", deviceName);
 
-        
-
         playerController = GameObject.Find("OVRPlayerController");
 
+        // you absolutely need it to deserialize your objects correctly, make sure you got Elements.dll
         PrepareTheDeserializer();
 
-        /*
-        object[] obj = UnityEngine.Object.FindObjectsOfType(typeof(GameObject)) as GameObject[];
-        foreach (object o in obj)
-        {
-            GameObject g = (GameObject)o;
-            try
-            {
-                g.GetComponent<Renderer>().material.color = new Color(9f, 0f, 0f, 1f); // RED INDICATES THAT THE COLOUR IS THE ONLY THING THAT WORKED
-            } catch (Exception) { }
-        }//*/
-
+       
         // handler for messages
         try
         {
+            // you need the protobuf serializer
             customSendReceiveOptions = new SendReceiveOptions<ProtobufSerializer>();
             
             //Create a connectionInfo object that specifies the target server
@@ -99,13 +102,14 @@ public class NCClient : MonoBehaviour
 
             //Get a connection with the specified connectionInfo
             serverConnection = TCPConnection.GetConnection(connectionInfo, customSendReceiveOptions);
+
+            // calls ClientDisconnected if it disconnects
             serverConnection.AppendShutdownHandler(ClientDisconnected);
+
+            // if u receive a message of type communication with the communication tag then it calls handleincomingchatmessage(), and it does that with the customsendreceiveoptions that you need
             serverConnection.AppendIncomingPacketHandler<Communication>("Communication", HandleIncomingChatMessage, customSendReceiveOptions);
             
-            // get the deplacement instructions // use MyCamera.cs instead
-            //serverConnection.AppendIncomingPacketHandler<string>("Deplacement", HandleIncomingDeplacement);
-
-            // get the objects 
+            // get the objects sent by the server and add it to the construction queue
             serverConnection.AppendIncomingPacketHandler<CommunicateElement>("Element", HandleIncomingObject, customSendReceiveOptions);
 
             // get an update on an object
@@ -115,11 +119,6 @@ public class NCClient : MonoBehaviour
         {
             //We can decide what to do here if the synchronous send and receive timed out after the specified 1000ms
         }
-
-        // for testing purpose
-        Elements.Sphere sphere = new Sphere(1, "Sphere", "Element", 1, 1, true, new Length(1, UnitsNet.Units.LengthUnit.Meter), new Length(1, UnitsNet.Units.LengthUnit.Meter));
-        CreateObject(sphere);
-
 
         // set the id of all objects that were introduced previously in the scene
         object[] obj = UnityEngine.Object.FindObjectsOfType(typeof(GameObject)) as GameObject[];
@@ -139,22 +138,34 @@ public class NCClient : MonoBehaviour
                 g.GetComponent<AdditionnalProperties>().ID = currentID;
                 currentID++;
             }
-        }//*/
+        }
 
     }
 
+    /// <summary>
+    /// enable vr
+    /// </summary>
     public void EnableVR()
     {
         VR_enabled = true;
         StartCoroutine(LoadDevice(deviceName, true));
     }
 
+    /// <summary>
+    /// disables vr
+    /// </summary>
     public void DisableVR()
     {
         VR_enabled = false;
         StartCoroutine(LoadDevice("", false));
     }
 
+    /// <summary>
+    /// load the device connected
+    /// </summary>
+    /// <param name="newDevice"></param>
+    /// <param name="enable"></param>
+    /// <returns></returns>
     IEnumerator LoadDevice(string newDevice, bool enable)
     {
         XRSettings.LoadDeviceByName(newDevice);
@@ -162,7 +173,10 @@ public class NCClient : MonoBehaviour
         XRSettings.enabled = enable;
     } // https://stackoverflow.com/questions/36702228/enable-disable-vr-from-code
 
-
+    /// <summary>
+    /// returns true if the vr is enabled
+    /// </summary>
+    /// <returns></returns>
     public bool IsVREnabled() { return VR_enabled; }
 
 
@@ -177,13 +191,14 @@ public class NCClient : MonoBehaviour
         if (incomingMessage.SecretKey == 1234 && NetworkComms.NetworkIdentifier != connection.ConnectionInfo.NetworkIdentifier)
         {
             message = new Communication(NetworkComms.NetworkIdentifier, position, 1234);
-            serverConnection.SendObject("Communication", message);
-        }//*/
+            serverConnection.SendObject("Communication", message); // sends back a communication message
+            // this is more for example purpose than anything else
+        }
     }
 
 
     /// <summary>
-    /// Performs whatever functions we might so desire when we receive an incoming ChatMessage
+    /// add an object to the construction queue
     /// </summary>
     /// <param name="header">The PacketHeader corresponding with the received object</param>
     /// <param name="connection">The Connection from which this object was received</param>
@@ -194,10 +209,9 @@ public class NCClient : MonoBehaviour
         {
             try
             {
-                //System.IO.File.WriteAllText(@"json.txt", incomingMessage.Message);
-                
+                // adds an object to the construction queue, this is the tricky part
+                // it converts your BaseElement object into a cylinder or whatever you want
                 constructionQueue.Add(JsonConvert.DeserializeObject<BaseElement>(incomingMessage.Message, _jsonSerializerSettings));
-                
             }
             catch (Exception e) { System.IO.File.WriteAllText(@"Debug.txt", e.ToString()); }
         }
@@ -212,7 +226,7 @@ public class NCClient : MonoBehaviour
     /// <param name="incomingMessage">The incoming CommunicateElement we are after</param>
     private void HandleIncomingObjectUpdate(PacketHeader header, Connection connection, CommunicateUpdate incomingMessage)
     {
-
+        // verifies it is an object 
         if (incomingMessage.ID != -1)
         {
             if (incomingMessage.SecretKey == 1234 && NetworkComms.NetworkIdentifier != connection.ConnectionInfo.NetworkIdentifier)
@@ -222,7 +236,6 @@ public class NCClient : MonoBehaviour
                 {
                     
                     GameObject g = (GameObject)o;
-                    //System.IO.File.WriteAllText(@"Readme.txt", g.GetComponent<AdditionnalProperties>().ID + "," + incomingMessage.ID);
                     if (g.GetComponent("AdditionnalProperties") != null)
                     {
                         if (g.GetComponent<AdditionnalProperties>().ID == incomingMessage.ID)
@@ -232,7 +245,6 @@ public class NCClient : MonoBehaviour
                             UpdateCanvas(content);
 
                             // deserialize the object
-                            //constructionQueue.Add(JsonConvert.DeserializeObject<BaseElement>(content, _jsonSerializerSettings));
                             string position = GetBetween(content, "<Position", "Position>");
                             string spax = GetBetween(position, "<a:x>", "</a:x>");
                             if (!Int32.TryParse(spax, out int pax))
@@ -273,23 +285,24 @@ public class NCClient : MonoBehaviour
 
 
                             // and update properties
-                            //Destroy(g);
                             g.transform.position = new Vector3(pax, pay, paz);
                             g.transform.localScale = new Vector3(sax, say, saz);
-
-
-
-
-
-
+                            
                             break; // get out of the loop
                         }
                     }
-                }//*/
+                }
             }
         }
     }
 
+    /// <summary>
+    /// get the string between the two given strings
+    /// </summary>
+    /// <param name="strSource">source you are interested in extract something</param>
+    /// <param name="strStart">first string</param>
+    /// <param name="strEnd">second string</param>
+    /// <returns></returns>
     public static string GetBetween(string strSource, string strStart, string strEnd)
     {
         int Start, End;
@@ -323,7 +336,7 @@ public class NCClient : MonoBehaviour
                 break;
             }
         }
-        //PrimitiveType.
+        // PrimitiveType.
         // Capsule Cube Cylinder Plane Quad Sphere
         if (go != null)
         {
@@ -342,28 +355,20 @@ public class NCClient : MonoBehaviour
     }
 
  
-
+    /// <summary>
+    /// do whatever you want if it disconnected
+    /// </summary>
+    /// <param name="connection"></param>
     static void ClientDisconnected(Connection connection)
     {
-        /*GameObject cylinder = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        cylinder.transform.position = new Vector3(1.0f + position, 0, 0);
-        position++;*/
-
-        object[] obj = UnityEngine.Object.FindObjectsOfType(typeof(GameObject)) as GameObject[];
-        foreach (object o in obj)
-        {
-            GameObject g = (GameObject)o;
-            try
-            {
-                g.GetComponent<Renderer>().material.color = new Color(9f, 0f, 0f, 1f); // RED INDICATES THAT THE CLIENT DISCONNECTED
-            }
-            catch (Exception) { }
-        }//*/
     }
 
     
 
-    // Update is called once per frame
+    /// <summary>
+    /// connects you if u aren't already
+    /// and builds what is in the construction queue
+    /// </summary>
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.O))
@@ -373,11 +378,11 @@ public class NCClient : MonoBehaviour
 
         while (constructionQueue.Count != 0)
         {
-            CreateObject(constructionQueue[0]);// constructionQueue.Count-1]);
-            constructionQueue.RemoveAt(0);// constructionQueue.Count-1);
+            CreateObject(constructionQueue[0]);
+            constructionQueue.RemoveAt(0); // you may get troubles if u construct too many things at the same time
         }
 
-        if (!clientOff) // if we want the client to do something
+        if (!clientOff) // if we want the client to do something we need to connect it
         {
             if (serverConnection != null && serverConnection.ConnectionAlive())
             {
@@ -397,27 +402,15 @@ public class NCClient : MonoBehaviour
                     try
                     {
                         g.GetComponent<Renderer>().material.color = new Color(1f, 1f, 1f, 1f);
-                        //g.GetComponent<Renderer>().material.color = new Color(0f, 9f, 0f, 1f); // GREEN INDICATES THAT THERE IS A CONNEXION
                     }
                     catch (Exception) { }
-                }//*/
+                }
             }
             else
             {
 
                 if (lookingForServer) // the server is probably turned off at that moment, so he looks for the server but cannot achieve his mission, even though he accepted it
                 {
-                    /*
-                    object[] obj = UnityEngine.Object.FindObjectsOfType(typeof(GameObject)) as GameObject[];
-                    foreach (object o in obj)
-                    {
-                        GameObject g = (GameObject)o;
-                        try
-                        {
-                            g.GetComponent<Renderer>().material.color = new Color(0f, 0f, 9f, 1f); // BLUE INDICATES THAT IT DIDNT CONNECT BUT THE SCRIPT UPDATE IS WORKING (AT LEAST)
-                        }
-                        catch (Exception) { }
-                    }//*/
                     lookingForServer = false;
                 }
 
@@ -437,6 +430,11 @@ public class NCClient : MonoBehaviour
 
     }
 
+
+    /// <summary>
+    /// send the caracteristics of your object to the server
+    /// </summary>
+    /// <param name="obj"></param>
     public void SendObjectCaracteristics(GameObject obj)
     {
         try
@@ -454,10 +452,7 @@ public class NCClient : MonoBehaviour
             monString = monString + "<ID \n    " + ID.ToString() + "\nID> \n\n";
             monString = monString + "<Position " + GetBetween(content, "<position xmlns:a=\"http://schemas.datacontract.org/2004/07/UnityEngine\">", "</position>") + "Position> \n\n";
             monString = monString + "<Scale " + GetBetween(content, "<scale xmlns:a=\"http://schemas.datacontract.org/2004/07/UnityEngine\">", "</scale>") + "Scale> \n\n";
-
             
-
-            //UpdateCanvas(monString);
 
             System.IO.File.WriteAllText(@"Content.txt", content);
 
@@ -471,6 +466,7 @@ public class NCClient : MonoBehaviour
 
     }
 
+    // if you press a key u can tell the server you did
     public void SendKeyDownIndication(string key)
     {
         try
@@ -479,40 +475,19 @@ public class NCClient : MonoBehaviour
         } catch (Exception e) { Debug.Log("No server connected"); }
     }
 
+
+    /// <summary>
+    /// on shutdown, closes the communication
+    /// </summary>
     void OnApplicationQuit()
     {
         NetworkComms.Shutdown();
     }
-
-    private void HandleIncomingDeplacement(PacketHeader header, Connection connection, string incomingMessage)
-    {
-        
-        switch (incomingMessage)
-        {
-            case "top":
-                //Camera.current.transform.Translate(new Vector3(0f, 0.0f, 1f));
-                playerController.transform.Translate(new Vector3(0f, 0.0f, 1f)); // we can't stop rendering the body so we move it with us
-                break;
-            case "right":
-                playerController.transform.Translate(new Vector3(1f, 0.0f, 0f));
-                //Camera.current.transform.Translate(new Vector3(1f, 0.0f, 0f));
-                break;
-            case "left":
-                playerController.transform.Translate(new Vector3(-1f, 0.0f, 0f));
-                //Camera.current.transform.Translate(new Vector3(-1f, 0.0f, 0f));
-                break;
-            case "bot":
-                playerController.transform.Translate(new Vector3(0f, 0.0f, -1f));
-                //Camera.current.transform.Translate(new Vector3(0f, 0.0f, -1f));
-                break;
-            default:
-                break;
-
-        }
-
-
-    }//*/
-
+    
+    /// <summary>
+    /// update the canvas
+    /// </summary>
+    /// <param name="monString"></param>
     private void UpdateCanvas(string monString)
     {
 
@@ -525,27 +500,24 @@ public class NCClient : MonoBehaviour
             txtPerso.text = monString;
     }
 
-
+    /// <summary>
+    /// this will allow u to deserialize your items correctly, maybe the most important thing of all
+    /// </summary>
     private void PrepareTheDeserializer() {
 
         Assembly[] myAssemblies = AppDomain.CurrentDomain.GetAssemblies();
-        //string[] lines = new string[myAssemblies.Length];
-        //int compteur = 0;
         for (int i = 0; i < myAssemblies.Length; i++)
         {
             if (myAssemblies[i].GetName().Name == "Elements")
             {
-                //lines[compteur] = myAssemblies[i].GetName().Name;
-                //compteur++;
                 Type[] types = myAssemblies[i].GetTypes();
                 _jsonSerializerSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All, Binder = new Assets.Binder(types), Formatting = Newtonsoft.Json.Formatting.Indented };
                 found = true;
                 break;
             }
         }
-        //System.IO.File.WriteAllLines(@"WriteText.txt", lines);
         if (!found)
-        {// may provoke crashes if selected
+        {// may provoke crashes if selected (if the assembly was not found)
             _jsonSerializerSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All, Formatting = Newtonsoft.Json.Formatting.Indented };
             System.IO.File.WriteAllText(@"Readme.txt", "Wrong settings selected, Elements.dll has not been found");
         }

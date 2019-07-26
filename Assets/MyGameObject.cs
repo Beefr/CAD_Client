@@ -8,6 +8,9 @@ using UnityEngine;
 
 namespace Assets
 {
+    /// <summary>
+    /// your game object with some more properties
+    /// </summary>
     [DataContract]
     class MyGameObject
     {

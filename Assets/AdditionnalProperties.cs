@@ -7,20 +7,11 @@ using UnityEngine;
 
 namespace Assets
 {
+    /// <summary>
+    /// ID and more for your objects
+    /// </summary>
     class AdditionnalProperties : MonoBehaviour
     {
         public int ID { get; set; }
-        
-
-        /*
-        private int ID;
-
-        public void Start() {
-            ID = -1;
-        }
-
-        public int GetID() { return ID; }
-        public void SetID(int ID) { this.ID = ID; }*/
-        
     }
 }

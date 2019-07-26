@@ -13,46 +13,57 @@ using UnityEngine.UI;
 
 namespace Assets
 {
+    /// <summary>
+    /// it modifies canvas
+    /// </summary>
     public class UiDesigner: MonoBehaviour
     {
-        private GameObject objPrinted;
+        private GameObject objPrinted; // the object we are interested in showing the caracteristics
 
-        private TMP_Text txtPerso;
-        private int lineNumber = 0;
-        private List<string> rightLines = new List<string>();
-        private Canvas SelectableUI;
-        private Canvas Values;
-        private Canvas NameOfTheValues;
-        private GameObject newButton;
-        private int spacing = 5;
-        private int canvaUpdated = 0;
-        private int numberOfLines = 0;
-        private string canvasText;
-        private int lineCount = 0;
-        private string[] myLines=new string[0];
+        private TMP_Text txtPerso; // txt to show ? where ?
+        private int lineNumber = 0; // current line of the canva
+        private List<string> rightLines = new List<string>(); 
+        private Canvas SelectableUI; // the ui 
+        private Canvas Values; // ui of the right
+        private Canvas NameOfTheValues; // ui of the left
+        private GameObject newButton; // buttons in the ui
+        private int spacing = 5; // spacement between lines
+        private int canvaUpdated = 0; // sort of timer
+        private int numberOfLines = 0; // number of lines TODO: verifies if it is useless
+        private string canvasText; // txt to show
+        private int lineCount = 0; // number of lines
+        private string[] myLines=new string[0]; // the lines to show
 
-        private int valueChanged = 0;
+        private int valueChanged = 0; // sort of timer
 
+        /// <summary>
+        /// initialize things
+        /// </summary>
         void Start()
         {
             try
             {
                 File.Delete(@"Content.txt");
             }
-            catch (Exception e) { /* y a pas le fichier */ }
-
+            catch (Exception e) { /* file not existing */ }
             
 
-
-            txtPerso = GameObject.Find("CanvasPerso").GetComponent<TMP_Text>();
+            txtPerso = GameObject.Find("CanvasPerso").GetComponent<TMP_Text>(); // TODO: verifies if it is useless
             SelectableUI = GameObject.Find("SelectableUI").GetComponent<Canvas>();
             Values = SelectableUI.transform.Find("Values").GetComponent<Canvas>();
             NameOfTheValues = SelectableUI.transform.Find("NameOfTheValues").GetComponent<Canvas>();
             Debug.Log(NameOfTheValues);
         }
 
+        /// <summary>
+        /// set the object that we want to show caracteristics
+        /// </summary>
+        /// <param name="obj"></param>
         public void setObj(GameObject obj) { objPrinted = obj; }
 
+        /// <summary>
+        /// each tick u can move the line that is highlighted, and change the value highlighted
+        /// </summary>
         void Update()
         {
 
@@ -105,7 +116,9 @@ namespace Assets
         }
 
 
-        
+        /// <summary>
+        /// the item selected gets downgraded
+        /// </summary>
         private void downgradeItem()
         {
 
@@ -118,7 +131,10 @@ namespace Assets
             }
             UpdateObject();
         }
-        
+
+        /// <summary>
+        /// the item selected gets upgraded
+        /// </summary>
         private void upgradeItem()
         {
             
@@ -135,7 +151,13 @@ namespace Assets
 
 
 
-
+        /// <summary>
+        /// get the string between the two given strings
+        /// </summary>
+        /// <param name="strSource">source you are interested in extract something</param>
+        /// <param name="strStart">first string</param>
+        /// <param name="strEnd">second string</param>
+        /// <returns></returns>
         public static string GetBetween(string strSource, string strStart, string strEnd)
         {
             int Start, End;
@@ -151,7 +173,9 @@ namespace Assets
             }
         } // credit https://stackoverflow.com/questions/10709821/find-text-in-string-with-c-sharp
 
-
+        /// <summary>
+        /// take the string and update your canva
+        /// </summary>
         public void convertStringToCanvas()
         {
 
@@ -219,8 +243,6 @@ namespace Assets
 
             myLines = canvasText.Split("\n\r".ToCharArray());
 
-            //System.IO.File.WriteAllLines(@"test.txt", myLines);
-
             foreach (string line in myLines)
             {
                 if (line.Length > 0)
@@ -252,13 +274,11 @@ namespace Assets
                             break;
                         default:
                             break;
-                    }//*/
+                    }
                 }
 
             }
-
-            //UpdateCanva(Values);
-            //UpdateCanva(NameOfTheValues);
+            
             if (rightLines.Count > 0)
                 UpdateCanva();
             numberOfLines = myLines.Length;
@@ -307,11 +327,8 @@ namespace Assets
                             var colors = Values.transform.GetChild(i).GetComponent<Button>().colors;
                             colors.normalColor = Color.red;
                             Values.transform.GetChild(i).GetComponent<Button>().colors = colors;
-
-
+                            
                             Values.transform.GetChild(i).GetComponentInChildren<TMP_Text>().color = Color.white;
-
-
                         }
                         else
                         {
@@ -320,7 +337,7 @@ namespace Assets
                             Values.transform.GetChild(i).GetComponent<Button>().colors = colors;
 
                             Values.transform.GetChild(i).GetComponentInChildren<TMP_Text>().color = Color.red;
-                        }//*/
+                        }
                         currentLine++;
                     }
 
@@ -333,7 +350,9 @@ namespace Assets
         }
         
 
-
+        /// <summary>
+        /// update the object with the caracteristics you updated
+        /// </summary>
         private void UpdateObject()
         {
 
@@ -355,7 +374,7 @@ namespace Assets
         }
         
         /// <summary>
-        /// only the childs tagged with UiLine
+        /// get the childs but only the childs tagged with UiLine
         /// </summary>
         /// <param name="C"></param>
         /// <returns></returns>
