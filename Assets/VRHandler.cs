@@ -1,106 +1,127 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TMPro;
-using UnityEditor;
+﻿using System.Collections;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.XR;
+using System;
 
 namespace Assets
 {
     /// <summary>
-    /// to use VR
+    /// to use VR, attached to ovrplayercontroller
     /// </summary>
     public class VRHandler : MonoBehaviour
     {
+        public bool IsVREnabled { get; private set; } = true;
 
-        private int alreadyCaptured = 0; // sort of timer
-
-        private GameObject playerController; // you
-        
-        private float rotationSpeed = 0.5f; 
-
-        private Transform indexGauche; // and on that hand u also need a finger to start to line renderer
-        private Transform hand; // you need a hand 
-        private LineRenderer lineGauche; // the line renderer to know where u are about to teleport
-        private RaycastHit hit2; // ray cast for teleportation
-
-        private Light[] lums; // to get the client
-
-        private TMP_Text txtPerso; // for the canva attached to u
+        public GameObject canvaPerso = null; // for the canva attached to u
 
         // some variables to de/activate things
-        private int toggleVR = 0; 
+        private int timingBetweenEachSecondaryIndexTrigger = 0;
         private int turnUI = 0;
-        
+        public float rotationSpeed = 0.5f;
+        public int UIRotationSpeed = 1;
+
         /// <summary>
-        /// to initialize things
+        /// to find the personnal canva
         /// </summary>
         void Start()
-        {
-            lums = Light.GetLights(LightType.Directional, 0);
-            
-            playerController = GameObject.Find("OVRPlayerController");
-
-            hand = playerController.transform.Find("OVRCameraRig").Find("TrackingSpace").Find("LeftHandAnchor");
-            indexGauche = hand.Find("IndexGauche");
-            
-            lineGauche = indexGauche.GetComponent<LineRenderer>();
-            lineGauche.startWidth = 0.01f;
-            lineGauche.endWidth = 0.01f;
-            lineGauche.startColor = Color.red;
-            lineGauche.endColor = Color.red;
-            
-            txtPerso = GameObject.Find("CanvasPerso").GetComponent<TMP_Text>();
+        { 
+            if (canvaPerso==null)
+            {
+                try
+                {
+                    canvaPerso = FindGameObjectInChildWithTag(GameObject.Find("OVRPlayerController"), "SelectableUI");
+                }
+                catch (Exception) { /*no personal canva*/ }
+            }
         }
 
+
+
+        /// <summary>
+        /// enables vr
+        /// </summary>
+        public void EnableVR()
+        {
+            if (XRSettings.loadedDeviceName!="")
+            {
+                IsVREnabled = true;
+                StartCoroutine(LoadDevice(XRSettings.loadedDeviceName, true));
+            } else { /* can't enable vr*/ }
+        }
+
+        /// <summary>
+        /// disables vr
+        /// </summary>
+        public void DisableVR()
+        {
+            IsVREnabled = false;
+            StartCoroutine(LoadDevice("", false));
+        }
+
+        /// <summary>
+        /// toggle the vr
+        /// </summary>
+        public void ToggleVR()
+        {
+            if (IsVREnabled == false) { EnableVR(); }
+            else { DisableVR(); }
+        }
+
+        /// <summary>
+        /// load the device connected
+        /// </summary>
+        /// <param name="newDevice"></param>
+        /// <param name="enable"></param>
+        /// <returns></returns>
+        IEnumerator LoadDevice(string newDevice, bool enable)
+        {
+            XRSettings.LoadDeviceByName(newDevice);
+            yield return null;
+            XRSettings.enabled = enable;
+        } // https://stackoverflow.com/questions/36702228/enable-disable-vr-from-code
+
+      
+
+        
+        /// <summary>
+        /// checks if keys are pressed or not
+        /// it allows to enable/disable VR 
+        /// to create elements by asking the server to
+        /// to rotate the UI around you
+        /// to rotate the camera
+        /// </summary>
         void Update()
         {
 
             // _______________________ ENABLING VR _____________________________________
-            toggleVR++;
-            if ((Input.GetKeyDown(KeyCode.P) || OVRInput.Get(OVRInput.Button.Two) || OVRInput.Get(OVRInput.RawButton.B)) && toggleVR > 25)
+            if ((Input.GetKeyDown(KeyCode.P) || OVRInput.Get(OVRInput.Button.Two) || OVRInput.Get(OVRInput.RawButton.B)))
             {
-                if (!lums[0].GetComponent<NCClient>().IsVREnabled())
-                {
-                    lums[0].GetComponent<NCClient>().EnableVR();
-                }
-                else
-                {
-                    lums[0].GetComponent<NCClient>().DisableVR();
-                }
-
-                toggleVR = 0;
+                //ToggleVR();
             }
             
             // if vr is enabled
-            if (lums[0].GetComponent<NCClient>().IsVREnabled())
+            if (IsVREnabled)
             {
-               alreadyCaptured++;
+                timingBetweenEachSecondaryIndexTrigger++;
                 // it sends a notification to the server, with the key pressed, and it sends back a notifications requesting the creation of an object
-                if ( (OVRInput.Get(OVRInput.Axis1D.SecondaryIndexTrigger) > 0 || OVRInput.Get(OVRInput.RawAxis1D.RIndexTrigger)>0) && alreadyCaptured > 25)
+                if ( (OVRInput.Get(OVRInput.Axis1D.SecondaryIndexTrigger) > 0 || OVRInput.Get(OVRInput.RawAxis1D.RIndexTrigger)>0) && timingBetweenEachSecondaryIndexTrigger > 25)
                 {
-                    lums[0].GetComponent<NCClient>().SendKeyDownIndication("SecondaryIndexTrigger");
-                    // ATTENTION S IL Y A PLUSIEURS LUMIERES
+                    GameObject.Find("Main").GetComponent<Client>().SendKeyDownIndication("SecondaryIndexTrigger");
 
-                    alreadyCaptured = 0;
+                    timingBetweenEachSecondaryIndexTrigger = 0;
                 }
 
                 // MOVING THE UI AROUND U
                 turnUI++;
                 if ((OVRInput.Get(OVRInput.Axis1D.PrimaryHandTrigger)>0 || OVRInput.Get(OVRInput.RawAxis1D.LHandTrigger) >0) && turnUI > 25)
                 {
-                    TMP_Text txtPerso = GameObject.Find("CanvasPerso").GetComponent<TMP_Text>();
-                    txtPerso.transform.RotateAround(playerController.transform.position, -Vector3.up, 30);
+                    canvaPerso.transform.RotateAround(GameObject.Find("OVRPlayerController").transform.position, GameObject.Find("OVRPlayerController").transform.up, -UIRotationSpeed);
 
                     turnUI = 0;
                 }
                 if ((OVRInput.Get(OVRInput.Axis1D.SecondaryHandTrigger) > 0 || OVRInput.Get(OVRInput.RawAxis1D.RHandTrigger)>0) && turnUI > 25)
                 {
-                    TMP_Text txtPerso = GameObject.Find("CanvasPerso").GetComponent<TMP_Text>();
-                    txtPerso.transform.RotateAround(playerController.transform.position, Vector3.up, 30);
+                    canvaPerso.transform.RotateAround(GameObject.Find("OVRPlayerController").transform.position, GameObject.Find("OVRPlayerController").transform.up, UIRotationSpeed);
 
                     turnUI = 0;
                 }
@@ -110,17 +131,39 @@ namespace Assets
                 // _________________ ROTATION of the camera (because if YOU rotate, then the camera rotates also __________________________________________________________
                 if (OVRInput.Get(OVRInput.Button.SecondaryThumbstickLeft) || GoingLeft(OVRInput.Get(OVRInput.RawAxis2D.RThumbstick)) || Input.GetKeyDown(KeyCode.A))
                 {
-                    playerController.transform.Rotate(-playerController.transform.up * rotationSpeed, Space.Self);
+                    GameObject.Find("OVRPlayerController").transform.Rotate(-GameObject.Find("OVRPlayerController").transform.up * rotationSpeed, Space.Self);
                 }
                 if (OVRInput.Get(OVRInput.Button.SecondaryThumbstickRight) || GoingRight(OVRInput.Get(OVRInput.RawAxis2D.RThumbstick)) || Input.GetKeyDown(KeyCode.E))
                 {
-                    playerController.transform.Rotate(playerController.transform.up * rotationSpeed, Space.Self);
+                    GameObject.Find("OVRPlayerController").transform.Rotate(GameObject.Find("OVRPlayerController").transform.up * rotationSpeed, Space.Self);
                 }
                 
                 
 
             }
 
+        }
+
+        /// <summary>
+        /// function to get the first child with this tag
+        /// </summary>
+        /// <param name="parent">parent of the child</param>
+        /// <param name="tag">the tag</param>
+        /// <returns>the child you want</returns>
+        public static GameObject FindGameObjectInChildWithTag(GameObject parent, string tag)
+        {
+            Transform parentTransform = parent.transform;
+
+            for (int i = 0; i < parentTransform.childCount; i++)
+            {
+                if (parentTransform.GetChild(i).gameObject.tag == tag)
+                {
+                    return parentTransform.GetChild(i).gameObject;
+                }
+
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -135,7 +178,7 @@ namespace Assets
                 return true;
 
             return false;
-        }
+        }//*/
 
         /// <summary>
         /// checks if the vector <0

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+//https://developer.oculus.com/blog/teleport-curves-with-the-gear-vr-controller/
 public class TallRaycaster : ArcRaycaster {
 	[Tooltip("Minimum pitch affecting curve size and raycast distance")]
 	public float minControllerAngle = 63;

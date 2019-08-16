@@ -13,13 +13,12 @@ namespace Assets
         private float rotateVertical; // angle vertical
         
         private float angleV = 0; // vertical angle
-        private float maxAngleV = 5f; // maximum height
-        private float minAngleV = 0; // min height
+        public float maxAngleV = 5f; // maximum height
+        public float minAngleV = 0; // min height
         
-        private GameObject playerController;
-        private Light[] lums;
+        public GameObject playerController;
 
-        // locks
+        // timers
         private int freezeV = 0; 
         private int freezeH = 0;
 
@@ -28,14 +27,14 @@ namespace Assets
         /// </summary>
         void Start()
         {
-            playerController = GameObject.Find("OVRPlayerController");
-            lums = Light.GetLights(LightType.Directional, 0);
+            if (playerController==null)
+                playerController = GameObject.Find("OVRPlayerController");
         }
 
         /// <summary>
         /// rotate the camera vertically or horizontally (not both on the same time)
         /// </summary>
-        public void Rotation()
+        private void Rotation()
         {
             if (Mathf.Abs(rotateHorizontal) > Mathf.Abs(rotateVertical) ) 
             {
@@ -60,11 +59,13 @@ namespace Assets
             rotateVertical = 0;
         }
 
-
+        /// <summary>
+        /// to rotate the camera in non-vr mode
+        /// </summary>
         void Update()
         {
-            // only enabled in non-vr mode or may cause u to "feel bad mister stark"
-            if (!lums[0].GetComponent<NCClient>().IsVREnabled())
+            // only enabled in non-vr mode 
+            if (!GameObject.Find("VRHandler").GetComponent<VRHandler>().IsVREnabled)
             {
                 freezeH++;
                 freezeV++;
@@ -92,7 +93,7 @@ namespace Assets
 
                 // move 
                 if (Input.GetKeyDown(KeyCode.Z))
-                    playerController.transform.Translate(new Vector3(0f, 0.0f, 1f)); // we can't stop rendering the body so we move it with us
+                    playerController.transform.Translate(new Vector3(0f, 0.0f, 1f)); 
 
                 if (Input.GetKeyDown(KeyCode.D))
                     playerController.transform.Translate(new Vector3(1f, 0.0f, 0f));

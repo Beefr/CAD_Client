@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+//https://developer.oculus.com/blog/teleport-curves-with-the-gear-vr-controller/
 public class TallVisualizer : ArcVisualizer {
 	[Tooltip("Bezier control point height when ArcRaycaster is at MIN distance")]
 	public float shortControlHeight = 1.5f;
@@ -12,7 +13,11 @@ public class TallVisualizer : ArcVisualizer {
 	void Awake() {
 		if (arcRenderer == null) {
             arcRenderer = GameObject.Find("OVRPlayerController").transform.Find("OVRCameraRig").Find("TrackingSpace").Find("LeftHandAnchor").Find("IndexGauche").GetComponent<LineRenderer> ();
-		}
+            arcRenderer.startWidth = 0.01f;
+            arcRenderer.endWidth = 0.01f;
+            arcRenderer.startColor = Color.red;
+            arcRenderer.endColor = Color.red;
+        }
 		if (arcRaycaster == null) {
 			arcRaycaster = GetComponent<TallRaycaster> ();
 		}

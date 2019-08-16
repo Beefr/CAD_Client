@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+//https://developer.oculus.com/blog/teleport-curves-with-the-gear-vr-controller/
 public class ArcVisualizer : MonoBehaviour {
 	[Tooltip("Raycaster to visualize")]
 	public ArcRaycaster arcRaycaster;

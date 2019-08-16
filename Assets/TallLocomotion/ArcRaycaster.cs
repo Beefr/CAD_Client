@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+//https://developer.oculus.com/blog/teleport-curves-with-the-gear-vr-controller/
 public class ArcRaycaster : MonoBehaviour {
 	[Tooltip("Tracking space of OVRCameraRig, VR space is relative to this")]
 	public Transform trackingSpace;

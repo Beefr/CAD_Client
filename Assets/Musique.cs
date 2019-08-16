@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Assets
 {
@@ -12,12 +7,12 @@ namespace Assets
     /// </summary>
     public class Musique:MonoBehaviour
     {
-        public AudioSource stingSource;
+        public AudioSource singSource;
 
         void Start()
         {
-            AudioSource stingSource = GetComponent<AudioSource>();
-            stingSource.Play();
+            singSource = GetComponent<AudioSource>();
+            singSource.Play();
         }
     }
 }
