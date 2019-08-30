@@ -41,8 +41,8 @@ namespace Assets
         /// </summary>
         void Start()
         {
-            Values = FindGameObjectInChildWithTag(gameObject, "Values").GetComponent<Canvas>();
-            NameOfTheValues = FindGameObjectInChildWithTag(gameObject, "NameOfTheValues").GetComponent<Canvas>();
+            Values = GameObjectHelper.FindGameObjectInChildWithTag(gameObject, "Values").GetComponent<Canvas>();
+            NameOfTheValues = GameObjectHelper.FindGameObjectInChildWithTag(gameObject, "NameOfTheValues").GetComponent<Canvas>();
 
             // Now lets test the event contained in the above class.
             this.Designing += new MyDesignerHandler(Design);
@@ -64,7 +64,7 @@ namespace Assets
         {
             try
             {
-                List<Transform> lines = GetAllChilds(Values);
+                List<Transform> lines = GameObjectHelper.GetAllChilds(Values);
                 for (int i = 1; i < lines.Count; i++) // not 0 because we don't modify the ID
                 {
                     lines[i].GetComponentInChildren<TMP_Text>().text = param[i].ToString();
@@ -123,46 +123,18 @@ namespace Assets
         {
             convertStringToCanvas(e.GetUI(), e.GetObjPrintedString());
         }
-
-        /// <summary>
-        /// get the childs but only the childs tagged with UiLine
-        /// </summary>
-        /// <param name="C"></param>
-        /// <returns></returns>
-        private List<Transform> GetAllChilds(Canvas C)
-        {
-            List<Transform> list = new List<Transform>();
-
-
-            for (int currentLine = 0; currentLine < C.transform.childCount; currentLine++) // for all the childs
-            {
-                if (C.transform.GetChild(currentLine).tag == "UiLine") // but only thoses who r a button with text
-                {
-                    list.Add(C.transform.GetChild(currentLine));
-                }
-
-
-            }
-            return list;
-        }
-
-
-
-       
+        
         /// <summary>
         /// take the string and update your canva
         /// </summary>
-        public void convertStringToCanvas(GameObject UI, string content)
+        private void convertStringToCanvas(GameObject UI, string content)
         {
 
             this.content = convertStringToCanvaString(content);
             UpdateCanva(UI, this.content);
 
         }
-
-
-    
-
+        
         /// <summary>
         /// put the string in a format that we are able to use to update our canvas
         /// </summary>
@@ -226,20 +198,19 @@ namespace Assets
                 ModifyCanva();
 
         }
-
-
+        
         private int DeleteAll(Canvas C)
         {
             int deletedItems = 0;
 
             // delete the previous ones
-            foreach (GameObject go in FindGameObjectsInChildWithTag(C.gameObject, "UiLine-Empty"))
+            foreach (GameObject go in GameObjectHelper.FindGameObjectsInChildWithTag(C.gameObject, "UiLine-Empty"))
             {
                 GameObject.Destroy(go);
                 deletedItems++;
             }
 
-            foreach (GameObject go in FindGameObjectsInChildWithTag(C.gameObject, "UiLine"))
+            foreach (GameObject go in GameObjectHelper.FindGameObjectsInChildWithTag(C.gameObject, "UiLine"))
             {
                 GameObject.Destroy(go);
                 deletedItems++;
@@ -257,7 +228,7 @@ namespace Assets
         private void AddLine(string txt, Canvas C, int deletedItems)
         {
             GameObject parent = C.gameObject;
-            int linecount = FindNumberOfChildsWithTag(parent, "UiLine-Empty") + FindNumberOfChildsWithTag(parent, "UiLine") - deletedItems;
+            int linecount = GameObjectHelper.FindNumberOfChildsWithTag(parent, "UiLine-Empty") + GameObjectHelper.FindNumberOfChildsWithTag(parent, "UiLine") - deletedItems;
             GameObject newButton = (GameObject)Instantiate(Resources.Load("MesPrefabs/UiLine"), new Vector3(0, -linecount * spacing, 0), Quaternion.identity); 
             RectTransform rt = newButton.GetComponent<RectTransform>();
             rt.sizeDelta = new Vector2(widthButton, heightButton);
@@ -271,9 +242,7 @@ namespace Assets
             newButton.tag = txt == "" ? "UiLine-Empty" : "UiLine";//*/
 
         }
-
-
-
+        
         /// <summary>
         ///  change the color of the two canvas included in C
         /// </summary>
@@ -284,7 +253,7 @@ namespace Assets
 
             int currentLine = 0;
             
-            if (FindNumberOfChildsWithTag(Values.gameObject, "UiLine")>0)
+            if (GameObjectHelper.FindNumberOfChildsWithTag(Values.gameObject, "UiLine")>0)
             {
 
                 for (int i = 0; i < Values.transform.childCount; i++) // for all the childs
@@ -318,65 +287,7 @@ namespace Assets
             }
             
         }
-
-
-
-        /// <summary>
-        /// find the first child of the parent that has the given tag
-        /// </summary>
-        /// <param name="parent">the parent of the child</param>
-        /// <param name="tag">the tag of the child</param>
-        /// <returns>the child</returns>
-        private static GameObject FindGameObjectInChildWithTag(GameObject parent, string tag)
-        {
-            Transform parentTransform = parent.transform;
-
-            for (int i = 0; i < parentTransform.childCount; i++)
-            {
-                if (parentTransform.GetChild(i).gameObject.tag == tag)
-                {
-                    return parentTransform.GetChild(i).gameObject;
-                }
-
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// find all the childs of the parent that have the given tag
-        /// </summary>
-        /// <param name="parent">the parent of the childs</param>
-        /// <param name="tag">the tag of the childs</param>
-        /// <returns>the childs</returns>
-        public static List<GameObject> FindGameObjectsInChildWithTag(GameObject parent, string tag)
-        {
-            Transform parentTransform = parent.transform;
-            List<GameObject> childs = new List<GameObject>();
-
-            for (int i = 0; i < parentTransform.childCount; i++)
-            {
-                if (parentTransform.GetChild(i).gameObject.tag == tag)
-                {
-                    childs.Add(parentTransform.GetChild(i).gameObject);
-                }
-
-            }
-
-            return childs;
-        }
-
-        /// <summary>
-        /// retrieves the number of childs in the parent that have the given tag
-        /// </summary>
-        /// <param name="parent">the parent of the childs</param>
-        /// <param name="tag">the tag of the childs</param>
-        /// <returns>the number of childs</returns>
-        public static int FindNumberOfChildsWithTag(GameObject parent, string tag)
-        {
-            return FindGameObjectsInChildWithTag(parent, tag).Count;
-        }
-
+        
     }
 
     public class MyDesignArgs : EventArgs

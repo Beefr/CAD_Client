@@ -81,12 +81,15 @@ namespace Assets
         /// <summary>
         /// create an object with the given element
         /// </summary>
-        /// <param name="c"></param>
+        /// <param name="basicElement">the BasicElement to build</param>
+        /// <param name="position">the position of the BasicElement</param>
+        /// <param name="currentID">the ID of the BasicElement</param>
         private static void CreateObject(BasicElement basicElement, int position, int currentID)
         {
-            basicElement.Build();
+            basicElement.Build(); // the mesh is updated when triangulating in the build function
 
-            MyMesh mesh = new MyMesh(basicElement.GetMesh().triangles, basicElement.GetMesh().vertices);
+            MyMesh mesh = new MyMesh(basicElement.GetMesh().triangles, basicElement.GetMesh().vertices); // here you get that mesh (OpencascadePart.MyMesh) and you convert it into an Assets.MyMesh
+            // if you need to refresh MyMesh for some reasons, you can update the faces the way you wish and then call basicElement.RecalculateMyMesh()
 
             mesh.obj.transform.localScale = new Vector3(1, 1, 1);
             mesh.obj.AddComponent<BoxCollider>();

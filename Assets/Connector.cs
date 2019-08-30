@@ -12,7 +12,7 @@ namespace Assets
     /// </summary>
     public sealed class Connector 
     {
-        public event MyConnectionHandler NoConnection;
+        public event MyConnectionHandler NoConnection; // is used in TryConnecting()
 
         private TCPConnection serverConnection = null;
         private ConnectionInfo connectionInfo;

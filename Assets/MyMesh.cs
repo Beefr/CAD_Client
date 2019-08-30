@@ -55,44 +55,6 @@ namespace Assets
             mf.mesh.Optimize();
             mf.mesh.RecalculateNormals();
         }
-        
-        /*
-        /// <summary>
-        /// create a new game object with the given faces
-        /// </summary>
-        /// <param name="objFaces">the faces of our mesh</param>
-        public MyMesh(List<Face> objFaces)
-        {
-            obj = new GameObject();
-
-            // set tri and vertices
-            ReArrangeVertices(objFaces);
-
-            // use tri and vertices to build the mesh
-            obj.AddComponent<MeshRenderer>();
-            MeshRenderer mr = MeshRenderer;
-            mr.material = new Material(Shader.Find("Specular"));
-
-            obj.AddComponent<MeshFilter>();
-            MeshFilter mf = MeshFilter;
-            Mesh mesh = new Mesh();
-            mf.mesh = mesh;
-
-            // fill uniqueVert and add it to the mesh
-            uniqueVert = ComputeVertices(vertices);
-            mf.mesh.vertices = uniqueVert;
-
-
-            // can you set the orientations before with ReArrangeVertices(List<Face>) please :) 
-            // get the triangles (takes the orientation in consideration) and add them to the mesh
-            ComputeTrianglesAndOrientations(tri);
-            mf.mesh.triangles = triangles;
-
-            // unity fonctions that compute normals
-            mf.mesh.Optimize();
-            mf.mesh.RecalculateNormals();
-
-        }//*/
 
         /// <summary>
         /// the mesh renderer

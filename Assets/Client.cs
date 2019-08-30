@@ -26,7 +26,6 @@ namespace Assets
     /// </summary>
     public class Client : MonoBehaviour
     {
-        
 
         // a construction queue
         private Constructor constructor;
@@ -35,7 +34,7 @@ namespace Assets
         public int port = 10000;
         public string ipAddress = "127.0.0.1";
         private Connector connector;
-        
+
 
         // for deserializing 
         private SendReceiveOptions customSendReceiveOptions = new SendReceiveOptions<ProtobufSerializer>();
@@ -75,9 +74,9 @@ namespace Assets
         {
             // for testing purpose
             //__________ server's part_________________
-            //Elements.Caps c = new Elements.Caps(1, "Caps", "Element", 1, 1, "Caps", new Length(0.2, LengthUnit.Meter), new Length(0.5, LengthUnit.Meter), new Length(0.4999, LengthUnit.Meter), new Length(0.5, LengthUnit.Meter), new Length(1, LengthUnit.Meter), new Length(0, LengthUnit.Meter), new Pressure(0, PressureUnit.Bar), "Caps", false);
+            Elements.Caps c = new Elements.Caps(1, "Caps", "Element", 1, 1, "Caps", new Length(0.2, LengthUnit.Meter), new Length(0.5, LengthUnit.Meter), new Length(0.4999, LengthUnit.Meter), new Length(0.5, LengthUnit.Meter), new Length(1, LengthUnit.Meter), new Length(0, LengthUnit.Meter), new Pressure(0, PressureUnit.Bar), "Caps", false);
             //Elements.PipeRectangular c = new Elements.PipeRectangular(1, "PipeRectangular", "Element", 1, 1, "PipeRectangular", "Shape", new Length(0.1, LengthUnit.Meter), new Length(1, LengthUnit.Meter), new Length(0.5, LengthUnit.Meter), new Length(0.5, LengthUnit.Meter));
-            Elements.ElbowCylindrical c = new Elements.ElbowCylindrical(1, "ElbowCylindrical", "Element", 1, 1, new Length(0.1, LengthUnit.Meter), new Length(1, LengthUnit.Meter), new Angle(90, AngleUnit.Degree), new Length(0, LengthUnit.Meter), false, new Length(0, LengthUnit.Meter), new Length(5, LengthUnit.Meter), new Length(0, LengthUnit.Meter), new Angle(0, AngleUnit.Degree), new Angle(0, AngleUnit.Degree));
+            //Elements.ElbowCylindrical c = new Elements.ElbowCylindrical(1, "ElbowCylindrical", "Element", 1, 1, new Length(0.1, LengthUnit.Meter), new Length(1, LengthUnit.Meter), new Angle(90, AngleUnit.Degree), new Length(0, LengthUnit.Meter), false, new Length(0, LengthUnit.Meter), new Length(5, LengthUnit.Meter), new Length(0, LengthUnit.Meter), new Angle(0, AngleUnit.Degree), new Angle(0, AngleUnit.Degree));
             //Elements.Cone c = new Elements.Cone(1, "Tube", "Element", 1, 1, new Length(0.1, LengthUnit.Meter), new Length(2, LengthUnit.Meter), new Length(1, LengthUnit.Meter), new Length(2, LengthUnit.Meter), new Angle(0, AngleUnit.Degree), new Length(0, LengthUnit.Meter), new Length(0, LengthUnit.Meter), new Length(0, LengthUnit.Meter), new Length(0, LengthUnit.Meter));
             //Elements.Tube c = new Elements.Tube(1, "Tube", "Element", 1, 1, "tube", new Length(1, LengthUnit.Meter), new Length(0.1, LengthUnit.Meter), new Length(2, LengthUnit.Meter));
             JsonSerializerSettings _jsonSerializerSettingsOCCServer = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto, Formatting = Formatting.Indented };
@@ -86,7 +85,7 @@ namespace Assets
             CommunicateElement messageObject = new CommunicateElement(NetworkComms.NetworkIdentifier, json, c.Designation);
             //__________ client's part_________________
             constructor.AddNewElement(JsonConvert.DeserializeObject<BasicElement>(messageObject.Message, _jsonSerializerSettingsOCC));//*/
-            constructor.IncrementPosition(5);
+            
         }
 
         /// <summary>
@@ -120,7 +119,6 @@ namespace Assets
 
                 if (connector.ConnectionAlive())
                 {
-                    File.WriteAllText(@"ConnectionStatus.txt", "alive");
 
                     // calls ClientDisconnected if it disconnects
                     connector.GetServerConnection().AppendShutdownHandler(ClientDisconnected);
@@ -134,7 +132,7 @@ namespace Assets
                     // get an update on an object
                     connector.GetServerConnection().AppendIncomingPacketHandler<CommunicateUpdate>("Update", HandleIncomingObjectUpdate, customSendReceiveOptions);
                 }
-                else { File.WriteAllText(@"ConnectionStatus.txt", "offline"); }
+                
             }
             
 
@@ -178,11 +176,11 @@ namespace Assets
 
             _jsonSerializerSettingsOCC = new JsonSerializerSettings
             {
-                TypeNameHandling = TypeNameHandling.All,
+                TypeNameHandling = TypeNameHandling.All, // TODO: remove the useless parameters
                 Binder = new AdvancedBinder(),
                 NullValueHandling = NullValueHandling.Ignore,
                 DefaultValueHandling = DefaultValueHandling.Ignore,
-                Formatting = Newtonsoft.Json.Formatting.Indented,
+                Formatting = Formatting.Indented,
                 ContractResolver = new CamelCasePropertyNamesContractResolver()
             };
 
@@ -219,12 +217,11 @@ namespace Assets
             {
                 try
                 {
-
                     // adds an object to the construction queue, this is the tricky part
                     // it converts your BaseElement object into a cylinder or whatever you want
                     //ConstructionQueue.Add(JsonConvert.DeserializeObject<BasicElement>(incomingMessage.Message, _jsonSerializerSettingsOCC));
                     constructor.AddNewElement(JsonConvert.DeserializeObject<BasicElement>(incomingMessage.Message, _jsonSerializerSettingsOCC));
-                    
+                    System.IO.File.WriteAllText(@"string.txt", incomingMessage.Message);
                 }
                 catch (Exception e) { System.IO.File.WriteAllText(@"Debug.txt", e.ToString()); }
             }
@@ -322,7 +319,6 @@ namespace Assets
 
 
         
-
-        ~Client() { System.IO.File.WriteAllText(@"ConnectionStatus.txt", "offline"); }
+        
     }
 }
