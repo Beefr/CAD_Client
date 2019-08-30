@@ -1,6 +1,18 @@
-# Don't track content of these folders
 
-# Compiled source #
-###################
 *.meta
 *.bin
+Assets/Oculus/
+*.dll
+*.obj
+*.mp3
+Library/
+Assets/TextMesh Pro/
+*.unity
+*.cd
+*.log
+*.json
+*.asset
+Temp/
+bin/
+*.txt
+obj/
